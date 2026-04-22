@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iron Man Mark VI — Demo Day</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech&family=Exo+2:ital,wght@0,100;0,300;0,400;1,100&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #04080f;
+    --bg2: #070d16;
+    --bg3: #0a1220;
+    --red: #c0392b;
+    --red-dim: rgba(192,57,43,0.15);
+    --gold: #d4a843;
+    --gold-dim: rgba(212,168,67,0.12);
+    --blue: #4a9ebb;
+    --blue-dim: rgba(74,158,187,0.1);
+    --text: #c8d4dc;
+    --text-dim: #566470;
+    --text-bright: #e8f0f5;
+    --border: rgba(74,158,187,0.15);
+    --border-red: rgba(192,57,43,0.3);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CUSTOM CURSOR */
+  #cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--blue);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.08s, width 0.2s, height 0.2s, background 0.2s;
+    mix-blend-mode: screen;
+  }
+  #cursor-ring {
+    position: fixed;
+    width: 32px; height: 32px;
+    border: 1px solid rgba(74,158,187,0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.18s ease-out, width 0.25s, height 0.25s, border-color 0.25s;
+  }
+  body:has(a:hover) #cursor, body:has(button:hover) #cursor { width: 14px; height: 14px; background: var(--red); }
+  body:has(a:hover) #cursor-ring, body:has(button:hover) #cursor-ring { width: 44px; height: 44px; border-color: rgba(192,57,43,0.6); }
+
+  /* PARTICLES CANVAS */
+  #particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5; }
+
+  /* HUD CORNERS — global decoration */
+  .hud-corner {
+    position: fixed;
+    width: 24px; height: 24px;
+    z-index: 10;
+    opacity: 0.4;
+  }
+  .hud-corner.tl { top: 16px; left: 16px; border-top: 1px solid var(--blue); border-left: 1px solid var(--blue); }
+  .hud-corner.tr { top: 16px; right: 16px; border-top: 1px solid var(--blue); border-right: 1px solid var(--blue); }
+  .hud-corner.bl { bottom: 16px; left: 16px; border-bottom: 1px solid var(--blue); border-left: 1px solid var(--blue); }
+  .hud-corner.br { bottom: 16px; right: 16px; border-bottom: 1px solid var(--blue); border-right: 1px solid var(--blue); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--red); }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 20px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(12px);
+    background: rgba(8,12,16,0.7);
+    border-bottom: 1px solid var(--border);
+    animation: fadeDown 0.8s ease both;
+  }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+
+  .nav-logo {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.2em;
+    color: var(--text-bright);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 10px var(--red);
+    animation: reactorPulse 2s ease-in-out infinite;
+  }
+  @keyframes reactorPulse { 0%,100%{box-shadow:0 0 8px var(--red);} 50%{box-shadow:0 0 20px var(--red), 0 0 40px rgba(192,57,43,0.3);} }
+
+  .nav-links { display: flex; gap: 36px; }
+  .nav-links a {
+    font-family: 'Share Tech', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-decoration: none;
+    position: relative;
+    transition: color 0.3s;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0; right: 0;
+    height: 1px;
+    background: var(--red);
+    transform: scaleX(0);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  .nav-links a:hover { color: var(--text-bright); }
+  .nav-links a:hover::after { transform: scaleX(1); }
+
+  /* MAIN LAYOUT */
+  main { position: relative; z-index: 1; }
+
+  /* ═══════════ HERO ═══════════ */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 120px 48px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Subtle diagonal grid */
+  #hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(74,158,187,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,158,187,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+  }
+
+  /* Red glow orb */
+  #hero::after {
+    content: '';
+    position: absolute;
+    top: 20%; right: 8%;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(192,57,43,0.06) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .hero-inner { max-width: 1100px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+  @media(max-width:768px){ .hero-inner{ grid-template-columns:1fr; gap:60px; } }
+
+  .hero-left { }
+
+  .hero-eyebrow {
+    font-family: 'Share Tech', monospace;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+  .hero-eyebrow::before { content: ''; width: 30px; height: 1px; background: var(--blue); }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+
+  .hero-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: clamp(52px, 7vw, 88px);
+    line-height: 0.92;
+    color: var(--text-bright);
+    letter-spacing: 0.01em;
+    animation: fadeUp 0.7s 0.35s ease both;
+  }
+  .hero-name .accent { color: var(--red); }
+
+  .hero-title {
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 100;
+    font-size: clamp(14px, 2vw, 18px);
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-top: 16px;
+    animation: fadeUp 0.7s 0.5s ease both;
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    line-height: 1.85;
+    color: #8eaabe;
+    margin-top: 28px;
+    max-width: 440px;
+    animation: fadeUp 0.7s 0.65s ease both;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 16px;
+    margin-top: 40px;
+    animation: fadeUp 0.7s 0.8s ease both;
+  }
+
+  .btn {
+    font-family: 'Share Tech', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 13px 28px;
+    border-radius: 2px;
+    cursor: none;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary {
+    background: var(--red);
+    color: #fff;
+    border: 1px solid var(--red);
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .btn-primary:hover { box-shadow: 0 0 24px rgba(192,57,43,0.5); transform: translateY(-2px); }
+  .btn-primary:hover::before { opacity: 1; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-2px); }
+
+  /* HERO RIGHT — Arc Reactor Visual */
+  .hero-right {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    animation: fadeUp 0.7s 0.4s ease both;
+  }
+
+  .reactor-wrap {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .reactor-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid;
+    animation: rotateCW linear infinite;
+  }
+  .ring1 { width: 280px; height: 280px; border-color: rgba(74,158,187,0.12); animation-duration: 30s; }
+  .ring2 { width: 220px; height: 220px; border-color: rgba(74,158,187,0.2); animation-duration: 20s; border-style: dashed; }
+  .ring3 { width: 160px; height: 160px; border-color: rgba(192,57,43,0.25); animation-duration: 12s; animation-direction: reverse; }
+  .ring4 { width: 100px; height: 100px; border-color: rgba(212,168,67,0.3); animation-duration: 8s; }
+
+  @keyframes rotateCW { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+
+  /* Tick marks on ring2 */
+  .ring2::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: 50%;
+    width: 3px; height: 6px;
+    background: var(--blue);
+    transform: translateX(-50%);
+    border-radius: 1px;
+  }
+
+  .reactor-core {
+    position: relative;
+    z-index: 2;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: corePulse 3s ease-in-out infinite;
+  }
+  .reactor-core svg { width: 80px; height: 80px; overflow: visible; }
+  @keyframes corePulse {
+    0%,100%{ filter: drop-shadow(0 0 10px rgba(74,158,187,0.9)) drop-shadow(0 0 28px rgba(74,158,187,0.5)); }
+    50%{     filter: drop-shadow(0 0 22px rgba(74,158,187,1))   drop-shadow(0 0 55px rgba(74,158,187,0.8)) drop-shadow(0 0 90px rgba(74,158,187,0.35)); }
+  }
+
+  /* Spokes */
+  .reactor-spoke {
+    position: absolute;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(74,158,187,0.6), transparent);
+    transform-origin: center center;
+    z-index: 1;
+  }
+  .spoke1 { height: 160px; top: 60px; left: 50%; transform: translateX(-50%) rotate(0deg); }
+  .spoke2 { height: 160px; top: 60px; left: 50%; transform: translateX(-50%) rotate(60deg); }
+  .spoke3 { height: 160px; top: 60px; left: 50%; transform: translateX(-50%) rotate(120deg); }
+
+  /* HUD data beside reactor */
+  .reactor-data {
+    position: absolute;
+    font-family: 'Share Tech', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+  }
+  .reactor-data.top { top: 0; left: 50%; transform: translateX(-50%); text-align: center; }
+  .reactor-data.right { right: -48px; top: 50%; transform: translateY(-50%); }
+  .reactor-data.bottom { bottom: 0; left: 50%; transform: translateX(-50%); text-align: center; }
+  .reactor-data span { color: var(--blue); }
+
+  /* STATUS TICKER */
+  .status-ticker {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    margin-top: 48px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    animation: fadeUp 0.7s 1s ease both;
+    flex-wrap: wrap;
+  }
+  .ticker-item { display: flex; flex-direction: column; gap: 4px; }
+  .ticker-label { font-family: 'Share Tech', monospace; font-size: 8px; letter-spacing: 0.2em; color: #7090a4; text-transform: uppercase; }
+  .ticker-val { font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 20px; color: var(--text-bright); }
+  .ticker-val.red { color: var(--red); }
+  .ticker-val.gold { color: var(--gold); }
+
+  /* ═══════════ SECTION COMMON ═══════════ */
+  section { padding: 100px 48px; position: relative; }
+  .section-inner { max-width: 1100px; margin: 0 auto; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 64px;
+  }
+  .section-num {
+    font-family: 'Share Tech', monospace;
+    font-size: 10px;
+    color: var(--red);
+    letter-spacing: 0.2em;
+  }
+  .section-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 40px);
+    color: var(--text-bright);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .section-line { flex: 1; height: 1px; background: var(--border); }
+
+  /* ═══════════ ABOUT ═══════════ */
+  #about { background: var(--bg2); }
+  #about::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+  @media(max-width:768px){ .about-grid{ grid-template-columns:1fr; } }
+
+  .about-text p {
+    font-size: 15px;
+    line-height: 1.9;
+    color: #90a8bc;
+    margin-bottom: 20px;
+  }
+  .about-text p strong { color: #d0e4f0; font-weight: 500; }
+
+  .about-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+  }
+  .stat-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 24px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px; height: 100%;
+    background: var(--red);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .stat-card:hover { border-color: rgba(74,158,187,0.35); transform: translateY(-3px); }
+  .stat-card:hover::before { transform: scaleY(1); }
+  .stat-num {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 36px;
+    color: #f0c040;
+    line-height: 1;
+    text-shadow: 0 0 12px rgba(240,192,64,0.4);
+  }
+  .stat-label { font-family: 'Share Tech', monospace; font-size: 10px; letter-spacing: 0.2em; color: #9ab4c4; text-transform: uppercase; margin-top: 6px; }
+
+  /* ═══════════ PROJECTS ═══════════ */
+  #projects { }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2px;
+  }
+
+  .project-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 32px 28px;
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+    transition: border-color 0.4s, transform 0.4s;
+    group: true;
+  }
+  /* Scanning line effect */
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: -100%; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent);
+    transition: top 0.0s;
+    opacity: 0;
+  }
+  .project-card:hover::before {
+    top: 110%;
+    transition: top 0.8s ease-in-out, opacity 0s;
+    opacity: 1;
+  }
+  .project-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--blue-dim), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .project-card:hover { border-color: rgba(74,158,187,0.4); transform: translateY(-4px); }
+  .project-card:hover::after { opacity: 1; }
+
+  .project-card-inner { position: relative; z-index: 1; }
+
+  .project-num { font-family: 'Share Tech', monospace; font-size: 10px; color: var(--red); letter-spacing: 0.2em; margin-bottom: 12px; }
+  .project-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    color: var(--text-bright);
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+    transition: color 0.3s;
+  }
+  .project-card:hover .project-name { color: var(--blue); }
+  .project-desc { font-size: 13px; line-height: 1.75; color: #8eb0c4; margin-bottom: 24px; }
+
+  .project-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .project-tag {
+    font-family: 'Share Tech', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border: 1px solid rgba(255,255,255,0.07);
+    padding: 4px 10px;
+    border-radius: 1px;
+    transition: border-color 0.3s, color 0.3s;
+  }
+  .project-card:hover .project-tag { border-color: rgba(74,158,187,0.25); color: var(--blue); }
+
+  .project-link {
+    position: absolute;
+    bottom: 28px; right: 28px;
+    font-size: 16px;
+    color: var(--text-dim);
+    text-decoration: none;
+    opacity: 0;
+    transform: translate(6px, -6px);
+    transition: opacity 0.3s, transform 0.3s, color 0.3s;
+    z-index: 2;
+  }
+  .project-card:hover .project-link { opacity: 1; transform: translate(0,0); color: var(--blue); }
+
+  /* FEATURED PROJECT */
+  .project-card.featured {
+    grid-column: span 2;
+    border-color: var(--border-red);
+  }
+  @media(max-width:768px){ .project-card.featured{ grid-column: span 1; } }
+  .project-card.featured::after { background: linear-gradient(135deg, var(--red-dim), transparent 60%); }
+  .project-card.featured:hover { border-color: rgba(192,57,43,0.5); }
+  .project-card.featured:hover .project-name { color: var(--red); }
+  .project-card.featured .project-tag { }
+  .project-card.featured:hover .project-tag { border-color: rgba(192,57,43,0.25); color: var(--red); }
+  .project-card.featured .project-link:hover { color: var(--red); }
+  .featured-badge {
+    display: inline-block;
+    font-family: 'Share Tech', monospace;
+    font-size: 8px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--red);
+    border: 1px solid var(--border-red);
+    padding: 3px 10px;
+    margin-bottom: 16px;
+  }
+
+  /* ═══════════ SKILLS ═══════════ */
+  #skills { background: var(--bg2); }
+
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 32px;
+  }
+
+  .skill-group { }
+  .skill-group-label {
+    font-family: 'Share Tech', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .skill-item { margin-bottom: 16px; }
+  .skill-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .skill-name { font-size: 13px; color: #c0d8e8; }
+  .skill-pct { font-family: 'Share Tech', monospace; font-size: 10px; color: #6a8a9e; }
+
+  .skill-bar-bg {
+    height: 2px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 1px;
+    overflow: visible;
+    position: relative;
+  }
+  .skill-bar {
+    height: 100%;
+    border-radius: 1px;
+    background: linear-gradient(90deg, var(--red), var(--gold));
+    position: relative;
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 1.2s cubic-bezier(0.4,0,0.2,1);
+  }
+  .skill-bar.visible { transform: scaleX(1); }
+  .skill-bar::after {
+    content: '';
+    position: absolute;
+    right: -1px; top: -2px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 8px var(--gold);
+    opacity: 0;
+    transition: opacity 0.3s 1s;
+  }
+  .skill-bar.visible::after { opacity: 1; }
+
+  /* ═══════════ TEAM ═══════════ */
+  #team { background: var(--bg2); }
+
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2px;
+  }
+
+  .team-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 32px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.4s, transform 0.4s;
+    cursor: none;
+  }
+  .team-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--red), var(--gold));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .team-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, var(--red-dim), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .team-card:hover { border-color: rgba(192,57,43,0.4); transform: translateY(-4px); }
+  .team-card:hover::before { transform: scaleX(1); }
+  .team-card:hover::after { opacity: 1; }
+
+  .team-card-inner { position: relative; z-index: 1; }
+
+  .team-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text-bright);
+    background: var(--bg2);
+    position: relative;
+    transition: border-color 0.3s;
+  }
+  .team-card:hover .team-avatar { border-color: var(--red); }
+  .team-avatar-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    border-top-color: var(--red);
+    animation: rotateCW 3s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .team-card:hover .team-avatar-ring { opacity: 1; }
+
+  .team-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 0.05em;
+    color: var(--text-bright);
+    margin-bottom: 4px;
+    transition: color 0.3s;
+  }
+  .team-card:hover .team-name { color: var(--red); }
+
+  .team-role {
+    font-family: 'Share Tech', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 14px;
+  }
+
+  .team-desc {
+    font-size: 12px;
+    line-height: 1.75;
+    color: #8eaabf;
+    margin-bottom: 18px;
+  }
+
+  .team-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .team-tag {
+    font-family: 'Share Tech', monospace;
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #7a9aaa;
+    border: 1px solid rgba(74,158,187,0.2);
+    padding: 3px 8px;
+    border-radius: 1px;
+    transition: border-color 0.3s, color 0.3s;
+  }
+  .team-card:hover .team-tag { border-color: rgba(192,57,43,0.2); color: rgba(192,57,43,0.8); }
+
+  /* ═══════════ CONTACT ═══════════ */
+  #contact { }
+
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; }
+  @media(max-width:768px){ .contact-grid{ grid-template-columns:1fr; } }
+
+  .contact-info p { font-size: 15px; line-height: 1.85; color: #90a8be; margin-bottom: 32px; }
+
+  .contact-links { display: flex; flex-direction: column; gap: 12px; }
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: 'Share Tech', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .contact-link::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--red-dim), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .contact-link:hover { border-color: var(--border-red); color: var(--text-bright); }
+  .contact-link:hover::before { transform: translateX(0); }
+  .contact-link-icon { font-size: 14px; position: relative; z-index: 1; }
+  .contact-link span { position: relative; z-index: 1; }
+
+  /* FORM */
+  .contact-form { display: flex; flex-direction: column; gap: 16px; }
+
+  .form-field { position: relative; }
+  .form-field label {
+    display: block;
+    font-family: 'Share Tech', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .form-field input,
+  .form-field textarea {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 12px 16px;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    resize: none;
+  }
+  .form-field input:focus,
+  .form-field textarea:focus {
+    border-color: rgba(74,158,187,0.5);
+    box-shadow: 0 0 0 3px rgba(74,158,187,0.05);
+  }
+  .form-field textarea { height: 120px; }
+
+  .form-submit {
+    font-family: 'Share Tech', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 14px 32px;
+    background: var(--red);
+    color: #fff;
+    border: 1px solid var(--red);
+    border-radius: 2px;
+    cursor: none;
+    transition: all 0.3s;
+    align-self: flex-start;
+    position: relative;
+    overflow: hidden;
+  }
+  .form-submit::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .form-submit:hover { box-shadow: 0 0 24px rgba(192,57,43,0.4); transform: translateY(-2px); }
+  .form-submit:hover::before { opacity: 1; }
+
+  /* FOOTER */
+  footer {
+    padding: 28px 48px;
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+  .footer-left { font-family: 'Share Tech', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--text-dim); }
+  .footer-left strong { color: var(--red); font-weight: 400; }
+  .footer-right { font-family: 'Share Tech', monospace; font-size: 9px; letter-spacing: 0.15em; color: rgba(86,100,112,0.5); }
+
+  /* REVEAL ON SCROLL */
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-d1 { transition-delay: 0.1s; }
+  .reveal-d2 { transition-delay: 0.2s; }
+  .reveal-d3 { transition-delay: 0.3s; }
+  .reveal-d4 { transition-delay: 0.4s; }
+</style>
+</head>
+<body>
+
+<!-- CURSORS -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- HUD CORNERS -->
+<div class="hud-corner tl"></div>
+<div class="hud-corner tr"></div>
+<div class="hud-corner bl"></div>
+<div class="hud-corner br"></div>
+
+<!-- PARTICLES -->
+<canvas id="particles"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    MARK·VI
+  </a>
+  <div class="nav-links">
+    <a href="#projects">Төсөл</a>
+    <a href="#about">Тухай</a>
+    <a href="#team">Баг</a>
+    <a href="#skills">Технологи</a>
+    <a href="#contact">Холбоо</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ═══ HERO ═══ -->
+  <section id="hero">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-eyebrow">Mark VI · EVA Armor Build · Demo Day 2024</div>
+        <h1 class="hero-name">Iron Man<br><span class="accent">Mark VI</span></h1>
+        <div class="hero-title">EVA хөөс · IoT · Cosplay Engineering</div>
+        <p class="hero-desc">Монкостэ cosplay болон Нэст Эдүкэйшн-ий Demo Day-д зориулан Iron Man Mark VI хуягийг EVA хөөсөөр бодитоор бүтээсэн төсөл.</p>
+        <div class="hero-cta">
+          <a href="#projects" class="btn btn-primary">Төсөл Үзэх</a>
+          <a href="#contact" class="btn btn-secondary">Холбогдох</a>
+        </div>
+
+        <div class="status-ticker">
+          <div class="ticker-item">
+            <div class="ticker-label">Suit</div>
+            <div class="ticker-val red">Mark VI</div>
+          </div>
+          <div class="ticker-item">
+            <div class="ticker-label">Материал</div>
+            <div class="ticker-val gold">EVA</div>
+          </div>
+          <div class="ticker-item">
+            <div class="ticker-label">IoT Систем</div>
+            <div class="ticker-val">5</div>
+          </div>
+          <div class="ticker-item">
+            <div class="ticker-label">Reactor</div>
+            <div class="ticker-val">▲ MK VI</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="reactor-wrap">
+          <div class="reactor-ring ring1"></div>
+          <div class="reactor-ring ring2"></div>
+          <div class="reactor-ring ring3"></div>
+          <div class="reactor-ring ring4"></div>
+          <div class="reactor-spoke spoke1"></div>
+          <div class="reactor-spoke spoke2"></div>
+          <div class="reactor-spoke spoke3"></div>
+          <div class="reactor-core">
+            <svg viewBox="-4 -4 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              </defs>
+              <!-- outermost faint triangle -->
+              <polygon points="40,0 80,70 0,70" stroke="rgba(74,158,187,0.25)" stroke-width="1" fill="rgba(74,158,187,0.02)"/>
+              <!-- rotating mid triangle -->
+              <polygon points="40,8 74,64 6,64" stroke="rgba(74,158,187,0.45)" stroke-width="1" fill="rgba(74,158,187,0.05)">
+                <animateTransform attributeName="transform" type="rotate" values="0 40 40;3 40 40;0 40 40;-3 40 40;0 40 40" dur="4s" repeatCount="indefinite"/>
+              </polygon>
+              <!-- inner crisp triangle -->
+              <polygon points="40,16 68,58 12,58" stroke="#4a9ebb" stroke-width="1.5" fill="rgba(74,158,187,0.12)" filter="url(#glow)"/>
+              <!-- bright core fill -->
+              <polygon points="40,26 60,52 20,52" fill="rgba(74,158,187,0.55)"/>
+              <!-- hottest center -->
+              <polygon points="40,34 54,48 26,48" fill="rgba(200,242,255,0.95)"/>
+              <!-- vertex glow dots -->
+              <circle cx="40" cy="0"  r="3" fill="#4a9ebb" opacity="0.9"/>
+              <circle cx="80" cy="70" r="3" fill="#4a9ebb" opacity="0.9"/>
+              <circle cx="0"  cy="70" r="3" fill="#4a9ebb" opacity="0.9"/>
+              <!-- inner vertex dots -->
+              <circle cx="40" cy="16" r="2" fill="#a0e0ff"/>
+              <circle cx="68" cy="58" r="2" fill="#a0e0ff"/>
+              <circle cx="12" cy="58" r="2" fill="#a0e0ff"/>
+            </svg>
+          </div>
+          <div class="reactor-data top"><span>PWR</span> 100%</div>
+          <div class="reactor-data right"><span>SYS</span> OK</div>
+          <div class="reactor-data bottom"><span>ARC</span> STABLE</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PROJECTS ═══ -->
+  <section id="projects">
+    <div class="section-inner">
+      <div class="section-header reveal">
+        <span class="section-num">01</span>
+        <h2 class="section-title">Төсөл</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="projects-grid">
+
+        <div class="project-card featured reveal">
+          <div class="project-card-inner">
+            <div class="featured-badge">Үндсэн Төсөл</div>
+            <div class="project-num">MARK-VI</div>
+            <div class="project-name">Iron Man Хуяг</div>
+            <p class="project-desc">EVA хөөсөөр Iron Man Mark VI хуягийг бодит мэтээр бүтээх төсөл. Bluetooth удирдлага, servo мотор, утаа гаргагч, LED гэрэл болон лазер гэрлийг нэгтгэсэн өмсөж болох IoT бүтээгдэхүүн.</p>
+            <div class="project-tags">
+              <span class="project-tag">EVA хөөс</span>
+              <span class="project-tag">IoT</span>
+              <span class="project-tag">Bluetooth</span>
+              <span class="project-tag">Servo Motor</span>
+              <span class="project-tag">Pepakura</span>
+            </div>
+          </div>
+          <a href="#" class="project-link">↗</a>
+        </div>
+
+        <div class="project-card reveal reveal-d1">
+          <div class="project-card-inner">
+            <div class="project-num">IoT-01</div>
+            <div class="project-name">Алсын Удирдлага</div>
+            <p class="project-desc">HC-05 Bluetooth модулиар app-аас хуягийг удирдах систем. Дуулга нээх, гэрэл асаах, утаа гаргах зэрэг функцуудыг агуулна.</p>
+            <div class="project-tags">
+              <span class="project-tag">HC-05</span>
+              <span class="project-tag">Bluetooth</span>
+              <span class="project-tag">App</span>
+            </div>
+          </div>
+          <a href="#" class="project-link">↗</a>
+        </div>
+
+        <div class="project-card reveal reveal-d2">
+          <div class="project-card-inner">
+            <div class="project-num">IoT-02</div>
+            <div class="project-name">Servo Дуулга</div>
+            <p class="project-desc">MG995 servo мотор ашиглан дуулгыг автоматаар нээж хаадаг механизм. Mark VI-ийн iconic онцлог шинж.</p>
+            <div class="project-tags">
+              <span class="project-tag">Servo MG995</span>
+              <span class="project-tag">Механик</span>
+              <span class="project-tag">Arduino</span>
+            </div>
+          </div>
+          <a href="#" class="project-link">↗</a>
+        </div>
+
+        <div class="project-card reveal reveal-d1">
+          <div class="project-card-inner">
+            <div class="project-num">IoT-03</div>
+            <div class="project-name">Эффект Систем</div>
+            <p class="project-desc">Нуруунаас water diffuser утаа гаргах, цээж болон дуулгаас LED Strip гэрэл, KY-008 улаан лазер гэрэл асаах систем.</p>
+            <div class="project-tags">
+              <span class="project-tag">LED Strip</span>
+              <span class="project-tag">KY-008 Laser</span>
+              <span class="project-tag">Water Diffuser</span>
+            </div>
+          </div>
+          <a href="#" class="project-link">↗</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+    <!-- ═══ ABOUT ═══ -->
+  <section id="about">
+    <div class="section-inner">
+      <div class="section-header reveal">
+        <span class="section-num">02</span>
+        <h2 class="section-title">Танилцуулга</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="about-grid">
+        <div class="about-text reveal reveal-d1">
+          <p>
+            Манай төсөл нь <strong>Iron Man киноны Mark VI</strong> хуягийг EVA хөөсөөр бодит мэтээр бүтээх юм.
+          </p>
+          <p>
+            Бид <strong>Монкостэ cosplay</strong> болон <strong>Нэст Эдүкэйшн Ай Ти Сургуулийн</strong> cosplay партид Iron Man-ийн хувцастайгаар оролцож байсан. Энэхүү туршлага дээр тулгуурлан Demo Day-ийн төслийн санааг олсон.
+          </p>
+          <p>
+            Pepakura программ ашиглан загвар зохиож, C хэл дээр IoT кодоо бичсэн.
+          </p>
+        </div>
+        <div class="about-stats reveal reveal-d2">
+          <div class="stat-card">
+            <div class="stat-num">EVA</div>
+            <div class="stat-label">Үндсэн Материал</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">5+</div>
+            <div class="stat-label">IoT Модуль</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">MK6</div>
+            <div class="stat-label">Загварын Дугаар</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">100%</div>
+            <div class="stat-label">Өмсөж Болох</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:56px;" class="reveal reveal-d2">
+        <div class="section-label" style="font-family:'Share Tech',monospace;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--blue);margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid var(--border);">Давуу Тал</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+          <div class="stat-card"><div class="stat-label" style="margin-bottom:6px;">Урам Зориг</div><div style="font-size:13px;color:#8eaabe;line-height:1.6;">Хүмүүст урам зориг өгч, бүтээлч сэтгэлгээг дэмжинэ</div></div>
+          <div class="stat-card"><div class="stat-label" style="margin-bottom:6px;">Хамтын Ажиллагаа</div><div style="font-size:13px;color:#8eaabe;line-height:1.6;">Найз нөхөд, хамтын ажиллагааг дэмжинэ</div></div>
+          <div class="stat-card"><div class="stat-label" style="margin-bottom:6px;">Мэдлэг Хуваалцах</div><div style="font-size:13px;color:#8eaabe;line-height:1.6;">Мэдлэг, ур чадвараа бусадтай хуваалцах боломж бүрдүүлнэ</div></div>
+          <div class="stat-card"><div class="stat-label" style="margin-bottom:6px;">Соёл Дэлгэрүүлэх</div><div style="font-size:13px;color:#8eaabe;line-height:1.6;">Урлаг, кино, комик соёлыг түгээн дэлгэрүүлнэ</div></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+    <!-- ═══ TEAM ═══ -->
+  <section id="team">
+    <div class="section-inner">
+      <div class="section-header reveal">
+        <span class="section-num">03</span>
+        <h2 class="section-title">Баг</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="team-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
+
+        <div class="team-card reveal reveal-d1">
+          <div class="team-card-inner">
+            <div class="team-avatar">УЭ<div class="team-avatar-ring"></div></div>
+            <div class="team-name">Уугандэрэнэ Батбилэг</div>
+            <div class="team-role">Үүсгэн байгуулагч · Инженер</div>
+            <p class="team-desc">EVA хөөсөн хуягийн загвар хийх, IoT систем угсрах, болон servo механизм боловсруулах ажлыг хариуцсан.</p>
+            <div class="team-tags">
+              <span class="team-tag">EVA Design</span>
+              <span class="team-tag">Arduino</span>
+              <span class="team-tag">IoT</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="team-card reveal reveal-d2">
+          <div class="team-card-inner">
+            <div class="team-avatar">ХТ<div class="team-avatar-ring"></div></div>
+            <div class="team-name">Хүсэлбаяр Тувдэндорж</div>
+            <div class="team-role">Хамтран үүсгэгч · Хөгжүүлэгч</div>
+            <p class="team-desc">Bluetooth удирдлагын app хөгжүүлэлт, C хэлний код бичих, болон эффект системийн интеграцийг хариуцсан.</p>
+            <div class="team-tags">
+              <span class="team-tag">C Programming</span>
+              <span class="team-tag">Bluetooth</span>
+              <span class="team-tag">Pepakura</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+    <!-- ═══ SKILLS ═══ -->
+  <section id="skills">
+    <div class="section-inner">
+      <div class="section-header reveal">
+        <span class="section-num">04</span>
+        <h2 class="section-title">Технологи</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="skills-grid">
+
+        <div class="skill-group reveal reveal-d1">
+          <div class="skill-group-label">Техник хангамж</div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">Servo MG995</span><span class="skill-pct">Дуулга нээх</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:90%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">HC-05 Bluetooth</span><span class="skill-pct">Холболт</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:85%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">Water Diffuser</span><span class="skill-pct">Утаа эффект</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:80%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">KY-008 Laser</span><span class="skill-pct">Гэрэл</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:88%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">LED Strip</span><span class="skill-pct">Гэрэлтүүлэг</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:95%"></div></div>
+          </div>
+        </div>
+
+        <div class="skill-group reveal reveal-d2">
+          <div class="skill-group-label">Програм хангамж</div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">C Programming</span><span class="skill-pct">IoT код</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:82%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">Pepakura</span><span class="skill-pct">3D загвар</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:90%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">Arduino IDE</span><span class="skill-pct">Хөгжүүлэлт</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:87%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">Bluetooth App</span><span class="skill-pct">Удирдлага</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:78%"></div></div>
+          </div>
+        </div>
+
+        <div class="skill-group reveal reveal-d3">
+          <div class="skill-group-label">Материал & Дизайн</div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">EVA хөөс</span><span class="skill-pct">Хуяг</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:95%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">Термо Хэлбэржүүлэлт</span><span class="skill-pct">Хэлбэр</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:88%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-top"><span class="skill-name">Будаг & Финиш</span><span class="skill-pct">Дизайн</span></div>
+            <div class="skill-bar-bg"><div class="skill-bar" style="width:83%"></div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+    <!-- ═══ CONTACT ═══ -->
+  <section id="contact">
+    <div class="section-inner">
+      <div class="section-header reveal">
+        <span class="section-num">05</span>
+        <h2 class="section-title">Холбоо Барих</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-info reveal reveal-d1">
+          <p>Төслийн талаар асуулт, санал хүсэлт байвал бидэнтэй холбогдоорой. Demo Day-д тавтай морил!</p>
+          <div class="contact-links">
+            <a href="mailto:uuganerdenee69@gmail.com" class="contact-link">
+              <span class="contact-link-icon">✉</span>
+              <span>uuganerdenee69@gmail.com</span>
+            </a>
+            <a href="mailto:khusebayartuvdendorj@gmail.com" class="contact-link">
+              <span class="contact-link-icon">✉</span>
+              <span>khusebayartuvdendorj@gmail.com</span>
+            </a>
+            <a href="https://instagram.com/vomitstainedsheet" target="_blank" class="contact-link">
+              <span class="contact-link-icon">◈</span>
+              <span>@vomitstainedsheet — Instagram</span>
+            </a>
+          </div>
+        </div>
+        <div class="contact-form reveal reveal-d2">
+          <div class="form-field">
+            <label>Нэр</label>
+            <input type="text" placeholder="Таны нэр">
+          </div>
+          <div class="form-field">
+            <label>Имэйл</label>
+            <input type="email" placeholder="your@email.com">
+          </div>
+          <div class="form-field">
+            <label>Мессеж</label>
+            <textarea placeholder="Асуулт, санал..."></textarea>
+          </div>
+          <button class="form-submit">Илгээх →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-left">MARK VI — <strong>Нэст Эдүкэйшн IT Сургууль</strong> · Demo Day 2024</div>
+  <div class="footer-right">EVA ARMOR BUILD · BLUETOOTH READY · 2024</div>
+</footer>
+
+<script>
+// CURSOR
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cursor.style.left = mx+'px'; cursor.style.top = my+'px'; });
+(function animRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = rx+'px';
+  ring.style.top = ry+'px';
+  requestAnimationFrame(animRing);
+})();
+
+// PARTICLES
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+for (let i = 0; i < 60; i++) {
+  particles.push({
+    x: Math.random() * W, y: Math.random() * H,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    size: Math.random() * 1.5 + 0.3,
+    alpha: Math.random() * 0.4 + 0.1,
+    color: Math.random() > 0.6 ? '192,57,43' : '74,158,187'
+  });
+}
+function drawParticles() {
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(${p.color},${p.alpha})`;
+    ctx.fill();
+  });
+  // draw connections
+  particles.forEach((p, i) => {
+    particles.slice(i+1).forEach(q => {
+      const d = Math.hypot(p.x-q.x, p.y-q.y);
+      if (d < 120) {
+        ctx.beginPath();
+        ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
+        ctx.strokeStyle = `rgba(74,158,187,${0.06*(1-d/120)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    });
+  });
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+// SCROLL REVEAL
+const revealEls = document.querySelectorAll('.reveal');
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.12 });
+revealEls.forEach(el => revealObs.observe(el));
+
+// SKILL BAR ANIMATION
+const bars = document.querySelectorAll('.skill-bar');
+const barObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.3 });
+bars.forEach(b => barObs.observe(b));
+</script>
+</body>
+</html>
